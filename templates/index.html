@@ -236,11 +236,30 @@
 
             <div class="card">
                 <h2 class="section-title">🙏 Motivi di Preghiera</h2>
-                <form action="/update_motivi" method="post" style="margin-top:8px;">
-                    <textarea name="motivi" rows="4" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ccc; font-family:inherit; font-size:0.95rem; resize:vertical;">{{ prayer_text }}</textarea>
-                    <button type="submit" style="margin-top:8px; padding:8px 16px; border:none; border-radius:8px; background:#4a90e2; color:white; cursor:pointer; font-weight:600;">💾 Salva</button>
-                </form>
+                <div id="motivi-display" style="color:#333; line-height:1.6; font-size:1.05rem; white-space:pre-wrap; padding:6px; border-radius:8px; background:#f8f9fa;">{{ prayer_text }}</div>
+                <textarea id="motivi-edit" name="motivi" rows="4" style="display:none; width:100%; padding:10px; border-radius:8px; border:1px solid #ccc; font-family:inherit; font-size:0.95rem; resize:vertical;">{{ prayer_text }}</textarea>
+                <div style="margin-top:8px;">
+                    <button onclick="toggleEdit()" id="btn-modifica" style="padding:8px 16px; border:none; border-radius:8px; background:#4a90e2; color:white; cursor:pointer; font-weight:600;">Modifica</button>
+                    <button onclick="salvaMotivi()" id="btn-salva" style="display:none; padding:8px 16px; border:none; border-radius:8px; background:#67c5a3; color:white; cursor:pointer; font-weight:600;">Salva</button>
+                </div>
             </div>
+            <script>
+                function toggleEdit() {
+                    document.getElementById('motivi-display').style.display = 'none';
+                    document.getElementById('motivi-edit').style.display = 'block';
+                    document.getElementById('btn-modifica').style.display = 'none';
+                    document.getElementById('btn-salva').style.display = 'inline-block';
+                }
+                async function salvaMotivi() {
+                    const testo = document.getElementById('motivi-edit').value;
+                    await fetch('/update_motivi', { method: 'POST', headers: {'Content-Type':'application/x-www-form-urlencoded'}, body: 'motivi=' + encodeURIComponent(testo) });
+                    document.getElementById('motivi-display').textContent = testo;
+                    document.getElementById('motivi-display').style.display = 'block';
+                    document.getElementById('motivi-edit').style.display = 'none';
+                    document.getElementById('btn-modifica').style.display = 'inline-block';
+                    document.getElementById('btn-salva').style.display = 'none';
+                }
+            </script>
         </div>
 
         <footer>
