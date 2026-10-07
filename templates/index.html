@@ -1,0 +1,290 @@
+    <!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard di Casa</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background: linear-gradient(135deg, #e0f7fa, #e8f5e9);
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, #4a90e2, #67c5a3);
+            color: white;
+            border-radius: 16px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 8px;
+        }
+        header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        .date {
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
+        }
+        .card h2 {
+            font-size: 1.5rem;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .weather-icon {
+            font-size: 2.5rem;
+        }
+        .temp {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #4a90e2;
+        }
+        .weather-details {
+            margin-top: 12px;
+            display: flex;
+            gap: 15px;
+            color: #666;
+        }
+        .section-title {
+            font-size: 1.3rem;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .deadline-list {
+            list-style: none;
+        }
+        .deadline-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            margin-bottom: 8px;
+            background: #f9fafb;
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+        .deadline-item:hover {
+            background: #f0f4f8;
+        }
+        .deadline-item.completed {
+            opacity: 0.6;
+            text-decoration: line-through;
+        }
+        .deadline-checkbox {
+            width: 22px;
+            height: 22px;
+            margin-right: 12px;
+            cursor: pointer;
+        }
+        .deadline-info {
+            flex: 1;
+        }
+        .deadline-title {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        .deadline-time {
+            font-size: 0.9rem;
+            color: #888;
+        }
+        .reminder-banner {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            color: #856404;
+            padding: 16px;
+            margin-bottom: 20px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.1rem;
+        }
+        .reminder-banner .icon {
+            font-size: 2rem;
+        }
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .action-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 15px;
+            background: #eef2f7;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .action-btn:hover {
+            background: #d8e2ec;
+        }
+        .action-icon {
+            font-size: 2rem;
+            margin-bottom: 5px;
+        }
+        .action-label {
+            font-size: 0.9rem;
+            color: #555;
+        }
+        footer {
+            margin-top: 40px;
+            text-align: center;
+            font-size: 0.9rem;
+            color: #777;
+        }
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            header h1 {
+                font-size: 2rem;
+            }
+            .date {
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header style="display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 200px;">
+                <div style="font-size: 3.5rem; font-weight: 800; color: white; line-height: 1;">{{ current_time }}</div>
+                <div style="font-size: 1.2rem; opacity: 0.95; margin-top: 4px;">{{ today }}</div>
+            </div>
+            <div style="text-align: right;">
+                <h1 style="font-size: 2.2rem; margin-bottom: 4px;">Buccheri Alfonso 🏠</h1>
+                <p style="font-size: 1.1rem; opacity: 0.95;">Dashboard personale di Medea, Luca e Ester</p>
+            </div>
+        </header>
+
+        {% if is_thursday %}
+        <div class="reminder-banner">
+            <span class="icon">⚠️</span>
+            <div>
+                <strong>Ricorda:</strong> Giovedì sera devi mettere l'<strong>indifferenziato</strong> fuori!
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="grid">
+            <div class="card">
+                <h2><span class="weather-icon">🌤️</span> Meteo di Oggi</h2>
+                <div class="temp">{{ weather.temp }}°C</div>
+                <div style="font-size: 1.1rem; color: #4a90e2; margin: 4px 0;">
+                    {{ weather.icon }} {{ weather.city }}
+                </div>
+                <div style="color: #555;">{{ weather.desc }}</div>
+                <div class="weather-details">
+                    <span>💧 {{ weather.humidity }}%</span>
+                    <span>🌬️ {{ weather.wind }} km/h</span>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2 class="section-title">⏰ Scadenze di Oggi</h2>
+                <ul class="deadline-list" id="deadline-list">
+                    {% for deadline in deadlines %}
+                    <li class="deadline-item {% if deadline.done %}completed{% endif %}" data-id="{{ deadline.id }}">
+                        <input type="checkbox" class="deadline-checkbox" {% if deadline.done %}checked{% endif %}>
+                        <div class="deadline-info">
+                            <div class="deadline-title">{{ deadline.title }}</div>
+                            <div class="deadline-time">{{ deadline.time }}</div>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <div class="card">
+                <h2 class="section-title">⚡ Azioni Rapide</h2>
+                <div class="quick-actions">
+                    <div class="action-btn" onclick="alert('Acceso luci del giardino')">
+                        <span class="action-icon">💡</span>
+                        <span class="action-label">Luci Giardino</span>
+                    </div>
+                    <div class="action-btn" onclick="alert('Visualizza sensori stanza')">
+                        <span class="action-icon">🌡️</span>
+                        <span class="action-label">Sensori Stanza</span>
+                    </div>
+                    <div class="action-btn" onclick="alert('Avvia sistema di irrigazione')">
+                        <span class="action-icon">🚿</span>
+                        <span class="action-label">Irrigazione</span>
+                    </div>
+                    <div class="action-btn" onclick="alert('Mostra report di energia')">
+                        <span class="action-icon">⚡</span>
+                        <span class="action-label">Energia</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>Dashboard creata da pi · Versione 1.0</p>
+        </footer>
+    </div>
+
+    <script>
+        // Toggle deadline completion via API
+        document.querySelectorAll('.deadline-checkbox').forEach(cb => {
+            cb.addEventListener('change', async (e) => {
+                const item = e.target.closest('.deadline-item');
+                const id = Number(item.getAttribute('data-id'));
+                try {
+                    const resp = await fetch(`/toggle_deadline/${id}`, { method: 'POST' });
+                    const data = await resp.json();
+                    if (data.done) {
+                        item.classList.add('completed');
+                    } else {
+                        item.classList.remove('completed');
+                    }
+                } catch (err) {
+                    console.error('Toggle failed', err);
+                    // revert UI
+                    e.target.checked = !e.target.checked;
+                }
+            });
+        });
+
+        // Posizione fissa: Cardano al Campo (21010)
+    </script>
+</body>
+</html>
