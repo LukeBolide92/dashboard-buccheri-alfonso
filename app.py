@@ -2,24 +2,53 @@ import json
 import urllib.request
 from datetime import datetime
 from flask import Flask, render_template, jsonify, request
+from google.oauth2 import service_account
+from googleapiclient.discovery import build
+from calendar_config import MEDEA_CALENDAR_ID
+from done_db import init_db, is_done, set_done, clean_old
 
 app = Flask(__name__)
+init_db()
+TODAY_STR = datetime.now().strftime('%Y-%m-%d')
+clean_old(TODAY_STR)
 
-# Placeholder deadlines for today (will be stored in data/deadlines.json)
-try:
-    with open("data/deadlines.json", "r", encoding="utf-8") as f:
-        DEADLINES = json.load(f)
-except Exception:
-    DEADLINES = [
-        {"id": 1, "title": "Pagare la bolletta della luce", "done": False, "time": "18:00"},
-        {"id": 2, "title": "Ritirare la posta", "done": False, "time": "12:00"},
-        {"id": 3, "title": "Chiamare la nonna", "done": False, "time": "20:00"},
-    ]
-    # ensure file exists
-    import os
-    os.makedirs("data", exist_ok=True)
-    with open("data/deadlines.json", "w", encoding="utf-8") as f:
-        json.dump(DEADLINES, f, ensure_ascii=False, indent=2)
+SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
+
+def fetch_calendar_events():
+    try:
+        creds = service_account.Credentials.from_service_account_file(
+            'service_account.json', scopes=SCOPES)
+        service = build('calendar', 'v3', credentials=creds)
+        now = datetime.now()
+        # Solo eventi di oggi (da mezzanotte a mezzanotte domani)
+        tomorrow = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        tomorrow += __import__('datetime').timedelta(days=1)
+        time_min = now.strftime('%Y-%m-%dT00:00:00Z')
+        time_max = tomorrow.strftime('%Y-%m-%dT00:00:00Z')
+        events = []
+        for cal_id, name in [('luca.buccheri.92@gmail.com', 'Luca'), (MEDEA_CALENDAR_ID, 'Medea')]:
+            try:
+                res = service.events().list(
+                    calendarId=cal_id,
+                    timeMin=time_min,
+                    timeMax=time_max,
+                    maxResults=10,
+                    singleEvents=True,
+                    orderBy='startTime'
+                ).execute()
+                for item in res.get('items', []):
+                    events.append({
+                        'id': item['id'],
+                        'title': f"[{name}] {item['summary']}",
+                        'done': is_done(item['id'], TODAY_STR),
+                        'time': item['start'].get('dateTime', item['start'].get('date'))[11:16],
+                    })
+            except Exception:
+                pass
+        # Se vuoto, mantiene placeholder
+        return events[:5]
+    except Exception:
+        return []
 
 
 CARDANO_LAT = 45.68
@@ -81,33 +110,31 @@ def fetch_weather():
 
 @app.route("/")
 def index():
-    today = datetime.now().strftime("%A %d %B %Y")
+    mesi = ['', 'Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno',
+            'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre']
+    giorni = ['Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato', 'Domenica']
+    now = datetime.now()
+    today = f"{giorni[now.weekday()]} {now.day}/{now.month}/{now.year}"
     current_time = datetime.now().strftime("%H:%M")
     weather = fetch_weather()
     is_thursday = datetime.now().weekday() == 3
+    deadlines = fetch_calendar_events()
     return render_template(
         "index.html",
         today=today,
         current_time=current_time,
         weather=weather,
         is_thursday=is_thursday,
-        deadlines=DEADLINES,
+        deadlines=deadlines,
     )
 
 
-@app.route("/toggle_deadline/<int:deadline_id>", methods=["POST"])
-def toggle_deadline(deadline_id):
-    deadline = next((d for d in DEADLINES if d["id"] == deadline_id), None)
-    if deadline:
-        deadline["done"] = not deadline["done"]
-        # persist
-        try:
-            with open("data/deadlines.json", "w", encoding="utf-8") as f:
-                json.dump(DEADLINES, f, ensure_ascii=False, indent=2)
-        except Exception:
-            pass
-        return jsonify({"done": deadline["done"]})
-    return jsonify({"done": False}), 404
+@app.route("/toggle_deadline/<event_id>", methods=["POST"])
+def toggle_deadline(event_id):
+    today_str = datetime.now().strftime('%Y-%m-%d')
+    done = not is_done(event_id, today_str)
+    set_done(event_id, today_str, done)
+    return jsonify({"done": done})
 
 
 if __name__ == "__main__":

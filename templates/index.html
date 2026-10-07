@@ -187,7 +187,7 @@
     <div class="container">
         <header style="display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap;">
             <div style="flex: 1; min-width: 200px;">
-                <div style="font-size: 3.5rem; font-weight: 800; color: white; line-height: 1;">{{ current_time }}</div>
+                <div style="font-size: 3.5rem; font-weight: 800; color: white; line-height: 1;" id="live-clock">{{ current_time }}</div>
                 <div style="font-size: 1.2rem; opacity: 0.95; margin-top: 4px;">{{ today }}</div>
             </div>
             <div style="text-align: right;">
@@ -267,24 +267,28 @@
         document.querySelectorAll('.deadline-checkbox').forEach(cb => {
             cb.addEventListener('change', async (e) => {
                 const item = e.target.closest('.deadline-item');
-                const id = Number(item.getAttribute('data-id'));
+                const eventId = item.getAttribute('data-id');
                 try {
-                    const resp = await fetch(`/toggle_deadline/${id}`, { method: 'POST' });
+                    const resp = await fetch(`/toggle_deadline/${eventId}`, { method: 'POST' });
                     const data = await resp.json();
-                    if (data.done) {
-                        item.classList.add('completed');
-                    } else {
-                        item.classList.remove('completed');
-                    }
+                    item.classList.toggle('completed', data.done);
+                    e.target.checked = data.done;
                 } catch (err) {
                     console.error('Toggle failed', err);
-                    // revert UI
                     e.target.checked = !e.target.checked;
                 }
             });
         });
 
-        // Posizione fissa: Cardano al Campo (21010)
+        function updateClock() {
+            const now = new Date();
+            const h = String(now.getHours()).padStart(2, '0');
+            const m = String(now.getMinutes()).padStart(2, '0');
+            const s = String(now.getSeconds()).padStart(2, '0');
+            document.getElementById('live-clock').textContent = h + ':' + m + ':' + s;
+        }
+        updateClock();
+        setInterval(updateClock, 1000);
     </script>
 </body>
 </html>
