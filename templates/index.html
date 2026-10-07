@@ -235,25 +235,11 @@
             </div>
 
             <div class="card">
-                <h2 class="section-title">⚡ Azioni Rapide</h2>
-                <div class="quick-actions">
-                    <div class="action-btn" onclick="alert('Acceso luci del giardino')">
-                        <span class="action-icon">💡</span>
-                        <span class="action-label">Luci Giardino</span>
-                    </div>
-                    <div class="action-btn" onclick="alert('Visualizza sensori stanza')">
-                        <span class="action-icon">🌡️</span>
-                        <span class="action-label">Sensori Stanza</span>
-                    </div>
-                    <div class="action-btn" onclick="alert('Avvia sistema di irrigazione')">
-                        <span class="action-icon">🚿</span>
-                        <span class="action-label">Irrigazione</span>
-                    </div>
-                    <div class="action-btn" onclick="alert('Mostra report di energia')">
-                        <span class="action-icon">⚡</span>
-                        <span class="action-label">Energia</span>
-                    </div>
-                </div>
+                <h2 class="section-title">🙏 Motivi di Preghiera</h2>
+                <form action="/update_motivi" method="post" style="margin-top:8px;">
+                    <textarea name="motivi" rows="4" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ccc; font-family:inherit; font-size:0.95rem; resize:vertical;">{{ prayer_text }}</textarea>
+                    <button type="submit" style="margin-top:8px; padding:8px 16px; border:none; border-radius:8px; background:#4a90e2; color:white; cursor:pointer; font-weight:600;">💾 Salva</button>
+                </form>
             </div>
         </div>
 

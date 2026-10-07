@@ -11,3 +11,7 @@ build/
 .pytest_cache/
 .mypy_cache/
 service_account.jsondone_events.db
+motivi.txt
+service_account.json
+done_events.db
+motivi.txt

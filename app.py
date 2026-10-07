@@ -5,14 +5,25 @@ from flask import Flask, render_template, jsonify, request
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from calendar_config import MEDEA_CALENDAR_ID
+from keep_config import NOTE_ID
 from done_db import init_db, is_done, set_done, clean_old
+
+# Motivi di preghiera - file semplice modificabile da browser
+MOTIVI_FILE = 'motivi.txt'
+
+def read_motivi():
+    try:
+        with open(MOTIVI_FILE, 'r', encoding='utf-8') as f:
+            return f.read()
+    except Exception:
+        return 'Pace per la famiglia\nGrazie per la giornata\nSalute e serenità'
 
 app = Flask(__name__)
 init_db()
 TODAY_STR = datetime.now().strftime('%Y-%m-%d')
 clean_old(TODAY_STR)
 
-SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
+SCOPES = ['https://www.googleapis.com/auth/calendar.readonly', 'https://www.googleapis.com/auth/keep']
 
 def fetch_calendar_events():
     try:
@@ -50,6 +61,29 @@ def fetch_calendar_events():
     except Exception:
         return []
 
+
+def fetch_keep_notes():
+    try:
+        creds = service_account.Credentials.from_service_account_file(
+            'service_account.json', scopes=SCOPES)
+        service = build('keep', 'v1', credentials=creds)
+        res = service.notes().get(name=f"notes/{NOTE_ID}").execute()
+        # Estrae testo (lista o blocchi)
+        body = res.get('body', {})
+        text_parts = []
+        if 'text' in body:
+            text_parts.append(body['text'].get('text', ''))
+        if 'list' in body:
+            for item in body['list'].get('listItems', []):
+                item_text = item.get('text', {}).get('text', '')
+                if item_text:
+                    text_parts.append('• ' + item_text)
+        note_text = '\n'.join(p for p in text_parts if p)
+        if not note_text.strip():
+            note_text = res.get('title', 'Nota preghiera')
+        return note_text
+    except Exception as e:
+        return f"Nota non accessibile: condivide con dashboard-casa@...? ({type(e).__name__})"
 
 CARDANO_LAT = 45.68
 CARDANO_LON = 8.82
@@ -108,6 +142,13 @@ def fetch_weather():
         return {"temp": None, "icon": "❓", "desc": "Impossibile caricare il meteo", "city": "Milano"}
 
 
+@app.route("/update_motivi", methods=["POST"])
+def update_motivi():
+    data = request.form.get('motivi', '')
+    with open(MOTIVI_FILE, 'w', encoding='utf-8') as f:
+        f.write(data)
+    return "OK"
+
 @app.route("/")
 def index():
     mesi = ['', 'Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno',
@@ -117,6 +158,7 @@ def index():
     today = f"{giorni[now.weekday()]} {now.day}/{now.month}/{now.year}"
     current_time = datetime.now().strftime("%H:%M")
     weather = fetch_weather()
+    prayer_text = read_motivi()
     is_thursday = datetime.now().weekday() == 3
     deadlines = fetch_calendar_events()
     return render_template(
@@ -126,6 +168,7 @@ def index():
         weather=weather,
         is_thursday=is_thursday,
         deadlines=deadlines,
+        prayer_text=prayer_text,
     )
 
 
