@@ -224,7 +224,6 @@
                 <ul class="deadline-list" id="deadline-list">
                     {% for deadline in deadlines %}
                     <li class="deadline-item {% if deadline.done %}completed{% endif %}" data-id="{{ deadline.id }}">
-                        <input type="checkbox" class="deadline-checkbox" {% if deadline.done %}checked{% endif %}>
                         <div class="deadline-info">
                             <div class="deadline-title">{{ deadline.title }}</div>
                             <div class="deadline-time">{{ deadline.time }}</div>
@@ -236,30 +235,8 @@
 
             <div class="card">
                 <h2 class="section-title">🙏 Motivi di Preghiera</h2>
-                <div id="motivi-display" style="color:#333; line-height:1.6; font-size:1.05rem; white-space:pre-wrap; padding:6px; border-radius:8px; background:#f8f9fa;">{{ prayer_text }}</div>
-                <textarea id="motivi-edit" name="motivi" rows="4" style="display:none; width:100%; padding:10px; border-radius:8px; border:1px solid #ccc; font-family:inherit; font-size:0.95rem; resize:vertical;">{{ prayer_text }}</textarea>
-                <div style="margin-top:8px;">
-                    <button onclick="toggleEdit()" id="btn-modifica" style="padding:8px 16px; border:none; border-radius:8px; background:#4a90e2; color:white; cursor:pointer; font-weight:600;">Modifica</button>
-                    <button onclick="salvaMotivi()" id="btn-salva" style="display:none; padding:8px 16px; border:none; border-radius:8px; background:#67c5a3; color:white; cursor:pointer; font-weight:600;">Salva</button>
-                </div>
+                <div style="color:#333; line-height:1.6; font-size:1.05rem; white-space:pre-wrap; padding:6px; border-radius:8px; background:#f8f9fa;">{{ prayer_text }}</div>
             </div>
-            <script>
-                function toggleEdit() {
-                    document.getElementById('motivi-display').style.display = 'none';
-                    document.getElementById('motivi-edit').style.display = 'block';
-                    document.getElementById('btn-modifica').style.display = 'none';
-                    document.getElementById('btn-salva').style.display = 'inline-block';
-                }
-                async function salvaMotivi() {
-                    const testo = document.getElementById('motivi-edit').value;
-                    await fetch('/update_motivi', { method: 'POST', headers: {'Content-Type':'application/x-www-form-urlencoded'}, body: 'motivi=' + encodeURIComponent(testo) });
-                    document.getElementById('motivi-display').textContent = testo;
-                    document.getElementById('motivi-display').style.display = 'block';
-                    document.getElementById('motivi-edit').style.display = 'none';
-                    document.getElementById('btn-modifica').style.display = 'inline-block';
-                    document.getElementById('btn-salva').style.display = 'none';
-                }
-            </script>
         </div>
 
         <footer>
@@ -268,23 +245,6 @@
     </div>
 
     <script>
-        // Toggle deadline completion via API
-        document.querySelectorAll('.deadline-checkbox').forEach(cb => {
-            cb.addEventListener('change', async (e) => {
-                const item = e.target.closest('.deadline-item');
-                const eventId = item.getAttribute('data-id');
-                try {
-                    const resp = await fetch(`/toggle_deadline/${eventId}`, { method: 'POST' });
-                    const data = await resp.json();
-                    item.classList.toggle('completed', data.done);
-                    e.target.checked = data.done;
-                } catch (err) {
-                    console.error('Toggle failed', err);
-                    e.target.checked = !e.target.checked;
-                }
-            });
-        });
-
         function updateClock() {
             const now = new Date();
             const h = String(now.getHours()).padStart(2, '0');
