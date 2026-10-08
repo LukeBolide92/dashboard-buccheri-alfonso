@@ -138,6 +138,35 @@ def api_weather(): return jsonify(fetch_weather())
 @app.route("/api/calendar-events")
 def api_calendar_events(): return jsonify(fetch_calendar_events())
 
+@app.route("/api/versetto")
+def api_versetto():
+    try:
+        import requests, datetime
+        with open('youversion_key.json') as f:
+            key = json.load(f).get('key', '')
+        today = datetime.datetime.now().timetuple().tm_yday
+        url = f"https://api.youversion.com/v1/verse-of-the-days/{today}"
+        resp = requests.get(url, headers={"X-YVP-App-Key": key}, timeout=10)
+        resp.raise_for_status()
+        data = resp.json()
+        # Il versetto del giorno può essere diretto o dentro data
+        if isinstance(data, dict) and "passage_id" in data:
+            passage_id = data.get("passage_id")
+        else:
+            passage = data.get("data", {}) if isinstance(data, dict) else {}
+            if isinstance(passage, list) and passage:
+                passage = passage[0]
+            passage_id = passage.get("passage_id") if isinstance(passage, dict) else None
+        if passage_id:
+            # Bibbia italiana: prova con ID comune; se sbagliato, cambia
+            bib_url = f"https://api.youversion.com/v1/bibles/54/passages/{passage_id}"
+            bib_resp = requests.get(bib_url, headers={"X-YVP-App-Key": key}, timeout=10)
+            if bib_resp.status_code == 200:
+                return jsonify(bib_resp.json())
+        return jsonify(data)
+    except Exception as e:
+        return jsonify({"error": str(e)})
+
 @app.route("/api/motivi")
 def api_motivi(): return jsonify({"motivi": read_motivi()})
 
