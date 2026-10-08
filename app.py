@@ -159,7 +159,7 @@ def api_versetto():
             passage_id = passage.get("passage_id") if isinstance(passage, dict) else None
         if passage_id:
             # Bibbia italiana: prova con ID comune; se sbagliato, cambia
-            bib_url = f"https://api.youversion.com/v1/bibles/54/passages/{passage_id}"
+            bib_url = f"https://api.youversion.com/v1/bibles/1932/passages/{passage_id}"
             bib_resp = requests.get(bib_url, headers={"X-YVP-App-Key": key}, timeout=10)
             if bib_resp.status_code == 200:
                 return jsonify(bib_resp.json())
