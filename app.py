@@ -121,42 +121,8 @@ def fetch_weather():
         return {"temp": None, "icon": "❓", "desc": "Impossibile caricare il meteo", "city": "Milano"}
 
 
-@app.route("/update_motivi", methods=["POST"])
-def update_motivi():
-    data = request.form.get('motivi', '')
-    with open(MOTIVI_FILE, 'w', encoding='utf-8') as f:
-        f.write(data)
-    return "OK"
-
-@app.route("/")
-def index():
-    mesi = ['', 'Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno',
-            'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre']
-    giorni = ['Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato', 'Domenica']
-    now = datetime.now()
-    today = f"{giorni[now.weekday()]} {now.day}/{now.month}/{now.year}"
-    current_time = datetime.now().strftime("%H:%M")
-    weather = fetch_weather()
-    prayer_text = read_motivi()
-    is_thursday = datetime.now().weekday() == 3
-    deadlines = fetch_calendar_events()
-    return render_template(
-        "index.html",
-        today=today,
-        current_time=current_time,
-        weather=weather,
-        is_thursday=is_thursday,
-        deadlines=deadlines,
-        prayer_text=prayer_text,
-    )
-
-
 @app.route("/toggle_deadline/<event_id>", methods=["POST"])
-def toggle_deadline(event_id):
-    today_str = datetime.now().strftime('%Y-%m-%d')
-    done = not is_done(event_id, today_str)
-    set_done(event_id, today_str, done)
-    return jsonify({"done": done})
+
 
 
 @app.after_request
