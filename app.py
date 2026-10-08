@@ -5,8 +5,6 @@ from flask import Flask, render_template, jsonify, request
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from calendar_config import MEDEA_CALENDAR_ID
-from keep_config import NOTE_ID
-from done_db import init_db, is_done, set_done, clean_old
 
 # Motivi di preghiera - file semplice modificabile da browser
 MOTIVI_FILE = 'motivi.txt'
@@ -18,12 +16,8 @@ def read_motivi():
     except Exception:
         return 'Pace per la famiglia\nGrazie per la giornata\nSalute e serenità'
 
-app = Flask(__name__)
-init_db()
-TODAY_STR = datetime.now().strftime('%Y-%m-%d')
-clean_old(TODAY_STR)
-
 SCOPES = ['https://www.googleapis.com/auth/calendar.readonly', 'https://www.googleapis.com/auth/keep']
+app = Flask(__name__)
 
 def fetch_calendar_events():
     try:
@@ -51,7 +45,7 @@ def fetch_calendar_events():
                     events.append({
                         'id': item['id'],
                         'title': f"[{name}] {item['summary']}",
-                        'done': is_done(item['id'], TODAY_STR),
+                        'done': False,
                         'time': item['start'].get('dateTime', item['start'].get('date'))[11:16],
                     })
             except Exception:
@@ -64,26 +58,10 @@ def fetch_calendar_events():
 
 def fetch_keep_notes():
     try:
-        creds = service_account.Credentials.from_service_account_file(
-            'service_account.json', scopes=SCOPES)
-        service = build('keep', 'v1', credentials=creds)
-        res = service.notes().get(name=f"notes/{NOTE_ID}").execute()
-        # Estrae testo (lista o blocchi)
-        body = res.get('body', {})
-        text_parts = []
-        if 'text' in body:
-            text_parts.append(body['text'].get('text', ''))
-        if 'list' in body:
-            for item in body['list'].get('listItems', []):
-                item_text = item.get('text', {}).get('text', '')
-                if item_text:
-                    text_parts.append('• ' + item_text)
-        note_text = '\n'.join(p for p in text_parts if p)
-        if not note_text.strip():
-            note_text = res.get('title', 'Nota preghiera')
-        return note_text
+        with open('motivi.txt', 'r', encoding='utf-8') as f:
+            return f.read()
     except Exception as e:
-        return f"Nota non accessibile: condivide con dashboard-casa@...? ({type(e).__name__})"
+        return f"Nota non disponibile ({type(e).__name__})"
 
 CARDANO_LAT = 45.68
 CARDANO_LON = 8.82
@@ -97,7 +75,7 @@ def fetch_weather():
         url = (
             f"https://api.open-meteo.com/v1/forecast?latitude={CARDANO_LAT}"
             f"&longitude={CARDANO_LON}"
-            f"&current=temperature_2m,relative_humidity_2m,weather_code&timezone=auto"
+            f"&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&timezone=auto"
         )
         with urllib.request.urlopen(url, timeout=10) as f:
             data = json.load(f)
@@ -136,6 +114,7 @@ def fetch_weather():
             "icon": icon,
             "desc": desc,
             "humidity": current.get("relative_humidity_2m"),
+            "wind": current.get("wind_speed_10m"),
             "city": "Cardano al Campo",
         }
     except Exception as e:
@@ -179,6 +158,22 @@ def toggle_deadline(event_id):
     set_done(event_id, today_str, done)
     return jsonify({"done": done})
 
+
+@app.after_request
+def add_cors_headers(response):
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+    response.headers['Access-Control-Allow-Methods'] = 'GET,POST,OPTIONS'
+    return response
+
+@app.route("/api/weather")
+def api_weather(): return jsonify(fetch_weather())
+
+@app.route("/api/calendar-events")
+def api_calendar_events(): return jsonify(fetch_calendar_events())
+
+@app.route("/api/motivi")
+def api_motivi(): return jsonify({"motivi": read_motivi()})
 
 if __name__ == "__main__":
     app.run(debug=True, host='0.0.0.0', port=5000)
