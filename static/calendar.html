@@ -74,7 +74,7 @@ loadEvents();
 </script>
 <script>
 function loadEvents(){
-  fetch('http://localhost:5000/api/calendar-events?month='+m+'&year='+y)
+  fetch('http://'+window.location.hostname+':5000/api/calendar-events?month='+m+'&year='+y)
     .then(r=>r.json())
     .then(data=>{
       window.calEvents = data;

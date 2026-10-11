@@ -51,7 +51,7 @@ document.getElementById('today').textContent=new Date().toLocaleDateString('it-I
 }
 updateClock(); setInterval(updateClock,1000);
 
-fetch('http://localhost:5000/api/weather')
+fetch('http://'+window.location.hostname+':5000/api/weather')
 .then(r=>r.json())
 .then(d=>{
 if(!d) return;
@@ -64,7 +64,7 @@ document.getElementById('weather-wind').textContent=d.wind||'?';
 });
 
 const todayStr = new Date().toISOString().split('T')[0];
-fetch('http://localhost:5000/api/calendar-events?month='+(new Date().getMonth()+1)+'&year='+new Date().getFullYear())
+fetch('http://'+window.location.hostname+':5000/api/calendar-events?month='+(new Date().getMonth()+1)+'&year='+new Date().getFullYear())
 .then(r=>r.json())
 .then(events=>{
 const ul=document.getElementById('deadline-list');
@@ -78,13 +78,13 @@ li.innerHTML='<div class="flex items-center gap-3"><span class="font-bold text-w
 ul.appendChild(li);
 });
 });
-fetch('http://localhost:5000/api/motivi')
+fetch('http://'+window.location.hostname+':5000/api/motivi')
 .then(r=>r.json())
 .then(d=>{
 document.getElementById('motivo-text').textContent=d.motivi||'';
 });
 
-fetch('http://localhost:5000/api/versetto')
+fetch('http://'+window.location.hostname+':5000/api/versetto')
 .then(r=>r.json())
 .then(d=>{
   const text = d.content || d.text || d.verse?.text || JSON.stringify(d);
