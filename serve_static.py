@@ -8,6 +8,11 @@ class Handler(SimpleHTTPRequestHandler):
             self.send_header('Location', '/static/index.html')
             self.end_headers()
             return
+        if self.path == '/calendario':
+            self.send_response(302)
+            self.send_header('Location', '/static/calendar.html')
+            self.end_headers()
+            return
         super().do_GET()
 
 if __name__ == "__main__":

@@ -1,21 +1,147 @@
 <!DOCTYPE html>
 <html lang="it">
-<head><meta charset="UTF-8"><title>Calendario - Buccheri Alfonso</title>
+<head>
+<meta charset="UTF-8">
+<title>Calendario - Buccheri Alfonso</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
 <style>body{font-family:'Inter',sans-serif}</style>
 </head>
 <body class="min-h-screen p-6 text-lg" style="background-image:url('https://th.bing.com/th/id/R.45369cac7770f676761b88c4607e8382?rik=9C0fad6CCjklUA&riu=http%3a%2f%2fgetwallpapers.com%2fwallpaper%2ffull%2f6%2f9%2fe%2f517158.jpg&ehk=%2f0kylz2YF12Mw2Uj9IIZ0IXxRJmWwUtidSyfKaWuWSM%3d&risl=&pid=ImgRaw&r=0');background-size:150%;background-position:center center;">
-<div class="max-w-3xl mx-auto">
-<header class="bg-slate-900/70 backdrop-blur rounded-2xl shadow-xl p-8 mb-8 text-center"><h1 class="text-3xl font-extrabold text-white">Buccheri Alfonso 🏠</h1><p class="text-slate-400">Calendario di Medea, Luca e Ester</p></header>
-<main class="bg-slate-900/70 backdrop-blur rounded-2xl shadow-xl p-6">
-<div class="flex gap-4 mb-6 justify-center"><select id="monthSel" class="bg-slate-800 text-white rounded p-2"><option>Gennaio</option><option>Febbraio</option><option>Marzo</option><option>Aprile</option><option>Maggio</option><option>Giugno</option><option>Luglio</option><option>Agosto</option><option>Settembre</option><option>Ottobre</option><option>Novembre</option><option>Dicembre</option></select><input id="yearSel" type="number" value="2025" class="bg-slate-800 text-white rounded p-2 w-24"></div>
-<div id="calGrid" class="grid grid-cols-7 gap-2 text-center text-sm"></div>
-</main>
+<div class="max-w-4xl mx-auto">
+<header class="bg-slate-900/70 backdrop-blur rounded-2xl shadow-xl p-8 mb-8 flex flex-wrap items-center justify-between gap-4">
+  <div>
+    <h1 class="text-3xl font-extrabold text-white">Buccheri Alfonso 🏠</h1>
+    <p class="text-slate-400">Dashboard di Medea, Luca e Ester</p>
+  </div>
+  <div class="text-right">
+    <div id="live-clock" class="text-3xl font-bold text-slate-200"></div>
+    <div id="today" class="text-slate-500 text-sm"></div>
+  </div>
+</header>
+
+<!-- Selettori anno/mese -->
+<div class="flex gap-4 mb-6">
+  <label class="flex items-center gap-2 cursor-pointer">Anno:</label>
+  <select id="yearSelect" class="bg-slate-800 text-white rounded p-2 w-28">
+    <option>2025</option><option>2026</option><option>2027</option>
+  </select>
+  
+  <label class="flex items-center gap-2 cursor-pointer">Mese:</label>
+  <select id="monthSelect" class="bg-slate-800 text-white rounded p-2 w-28">
+    <option>Gen</option><option>Feb</option><option>Mar</option><option>Apr</option>
+    <option>Mag</option><option>Giu</option><option>Lug</option>
+    <option>Set</option><option>Ott</option><option>Nov</option><option>Dic</option>
+  </select>
 </div>
+
+<!-- Vista calendario mensile -->
+<div id="calView" class="bg-slate-900/70 backdrop-blur rounded-2xl shadow-xl p-6">
+  <div class="flex justify-between items-center mb-4">
+    <h2 id="calTitle" class="text-xl font-bold text-white">Gen 2025</h2>
+    <button id="prevMonth" class="text-slate-400 hover:text-amber-400 transition-colors p-2 rounded">◀</button>
+    <button id="nextMonth" class="text-slate-400 hover:text-amber-400 transition-colors p-2 rounded">▶</button>
+  </div>
+  <div id="calGrid" class="grid grid-cols-7 gap-2 text-center"></div>
+</div>
+
 <script>
-function renderCal(){const m=parseInt(document.getElementById('monthSel').selectedIndex);const y=parseInt(document.getElementById('yearSel').value);const d=new Date(y,m,1);const grid=document.getElementById('calGrid');grid.innerHTML='';['L','M','M','G','V','S','D'].forEach(d=>{const el=document.createElement('div');el.className='font-bold text-amber-400';el.textContent=d;grid.appendChild(el);});while(d.getDay()!==1){const s=document.createElement('div');s.innerHTML='&nbsp;';grid.appendChild(s);d.setDate(d.getDate()+1);}for(let i=1;i<=new Date(y,m+1,0).getDate();i++){const s=document.createElement('div');s.className='bg-slate-800 rounded p-2 text-slate-200 hover:bg-amber-500 hover:text-white';s.textContent=i;grid.appendChild(s);}d.setDate(1);d.setMonth(d.getMonth()+1);}
-document.getElementById('monthSel').addEventListener('change',renderCal);document.getElementById('yearSel').addEventListener('input',renderCal);renderCal();
+// Configurazione
+const CALENDAR_CONFIG = {
+  months: ['Gen','Feb','Mar','Apr','Mag','Giu','Lug','Set','Ott','Nov','Dic'],
+  days: ['L','M','Mer','Gio','Ven','Sab','Dom']
+};
+
+function getYear() {
+  const sel = document.getElementById('yearSelect');
+  return parseInt(sel.value);
+}
+
+function getMonth() {
+  const sel = document.getElementById('monthSelect');
+  return parseInt(sel.value);
+}
+
+function renderCalendar(year, month) {
+  const view = document.getElementById('calView');
+  const title = document.getElementById('calTitle');
+  const grid = document.getElementById('calGrid');
+  
+  // Titolo
+  title.textContent = `${CALENDAR_CONFIG.months[month - 1]} ${year}`;
+  
+  // Grid
+  grid.innerHTML = '';
+  const firstDay = new Date(year, month - 1, 1).getDay(); // 0 = lunedì
+  const totalDays = new Date(year, month, 0).getDate(); // ultimo giorno del mese
+  
+  let rows = [];
+  // Prima riga: giorni del primo giorno del mese
+  for (let i = 0; i < firstDay; i++) {
+    rows.push(null);
+  }
+  // Giorni del mese
+  for (let d = 1; d <= totalDays; d++) {
+    const dayNum = d;
+    const dateStr = `${year}-${String(month).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    
+    // Trova il giorno corrente
+    const today = new Date();
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+    const isToday = dateStr === todayStr;
+    
+    const cellClass = isToday ? 'bg-amber-500/20 text-amber-400 font-medium' : 'bg-slate-900/70 text-slate-200';
+    const dayLabel = isToday ? '<strong>Oggi</strong>' : null;
+    
+    rows.push({
+      day: dayNum,
+      dateStr,
+      isToday,
+      dayLabel
+    });
+  }
+  
+  // Costruisci griglia
+  for (let rowIdx = 0; rowIdx < rows.length; rowIdx++) {
+    const row = [];
+    for (let colIdx = 0; colIdx < 7; colIdx++) {
+      const cell = rows[rowIdx];
+      if (!cell) {
+        row.push('<div class="text-slate-500 text-xs">–</div>');
+      } else {
+        const cls = cell.isToday ? 'bg-amber-500/20 text-amber-400 font-medium' : 'bg-slate-900/70 text-slate-200';
+        const label = cell.dayLabel ? `<span class="${cls}">${cell.day}: ${cell.dateStr}</span>` : '';
+        row.push(`<div class="${cls}">${label}</div>`);
+      }
+    }
+    grid.appendChild(row.join(''));
+  }
+  
+  // Eventi di navigazione
+  document.getElementById('prevMonth').addEventListener('click', () => {
+    const m = getMonth();
+    if (m > 0) {
+      document.getElementById('monthSelect').value = m;
+      renderCalendar(getYear(), m);
+    }
+  });
+  document.getElementById('nextMonth').addEventListener('click', () => {
+    const m = getMonth();
+    if (m < 11) {
+      document.getElementById('monthSelect').value = m;
+      renderCalendar(getYear(), m);
+    }
+  });
+}
+
+// Avvia render calendar + orologio
+function updateClock(){
+  const n=new Date();
+  document.getElementById('live-clock').textContent=String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0')+':'+String(n.getSeconds()).padStart(2,'0');
+  document.getElementById('today').textContent=new Date().toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+}
+updateClock(); setInterval(updateClock,1000);
+renderCalendar(getYear(), getMonth());
 </script>
 </body>
 </html>

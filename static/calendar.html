@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calendario - Buccheri Alfonso</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+<style>body{font-family:'Inter',sans-serif}</style>
+</head>
+<body class="min-h-screen p-3 overflow-hidden" style="background-image:url('https://th.bing.com/th/id/R.45369cac7770f676761b88c4607e8382?rik=9C0fad6CCjklUA&riu=http%3a%2f%2fgetwallpapers.com%2fwallpaper%2ffull%2f6%2f9%2fe%2f517158.jpg&ehk=%2f0kylz2YF12Mw2Uj9IIZ0IXxRJmWwUtidSyfKaWuWSM%3d&risl=&pid=ImgRaw&r=0');background-size:150%;background-position:center center;">
+<div class="w-full h-screen flex flex-col gap-2">
+  <header class="bg-slate-900/70 backdrop-blur rounded-2xl shadow-xl p-2 flex items-center justify-between gap-4">
+    <h1 class="text-2xl font-extrabold text-white flex items-center gap-3"><span>🏠</span> <span>📅</span></h1>
+    <div class="flex gap-2">
+      <button onclick="openSelect('month')" class="bg-slate-800 hover:bg-slate-700 rounded-xl px-4 py-2 shadow text-center transition-colors border border-slate-700/50"><div id="labelMonth" class="text-base font-bold text-white">Gen</div></button>
+      <button onclick="openSelect('year')" class="bg-slate-800 hover:bg-slate-700 rounded-xl px-4 py-2 shadow text-center transition-colors border border-slate-700/50"><div id="labelYear" class="text-base font-bold text-white">2025</div></button>
+    </div>
+  </header>
+
+  <div class="bg-slate-900/70 backdrop-blur rounded-2xl shadow-xl p-4 flex-1 flex flex-col min-h-0">
+    <div class="grid grid-cols-7 gap-1 text-center text-xs font-bold text-slate-400 mb-2">
+      <div>Lun</div><div>Mar</div><div>Mer</div><div>Gio</div><div>Ven</div><div>Sab</div><div>Dom</div>
+    </div>
+    <div id="calGrid" class="grid grid-cols-7 gap-1 flex-1" style="grid-template-rows: repeat(5, 1fr);"></div>
+  </div>
+</div>
+
+<div id="menuMonth" class="hidden fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4"><div class="bg-slate-900 rounded-2xl p-6 shadow-2xl max-w-sm w-full"><h3 class="text-xl font-bold text-white mb-4">Seleziona Mese</h3><div class="grid grid-cols-3 gap-2" id="monthGrid"></div><button onclick="closeSelect()" class="mt-4 w-full bg-slate-800 text-white rounded p-2 hover:bg-amber-500 transition">Chiudi</button></div></div>
+<div id="menuYear" class="hidden fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4"><div class="bg-slate-900 rounded-2xl p-6 shadow-2xl max-w-xs w-full h-96 overflow-y-auto"><h3 class="text-xl font-bold text-white mb-4">Seleziona Anno</h3><div class="grid grid-cols-3 gap-2" id="yearGrid"></div><button onclick="closeSelect()" class="mt-4 w-full bg-slate-800 text-white rounded p-2 hover:bg-amber-500 transition">Chiudi</button></div></div>
+
+<script>
+const months = ['Gen','Feb','Mar','Apr','Mag','Giu','Lug','Set','Ott','Nov','Dic'];
+let y = new Date().getFullYear(), m = new Date().getMonth() + 1;
+function updateUI(){
+  document.getElementById('labelMonth').textContent = months[m-1];
+  document.getElementById('labelYear').textContent = y;
+  buildGrid();
+}
+function buildGrid(){
+  const grid = document.getElementById('calGrid');
+  grid.innerHTML = '';
+  const firstDay = new Date(y, m-1, 1).getDay();
+  const offset = (firstDay + 6) % 7;
+  const total = new Date(y, m, 0).getDate();
+  const today = new Date();
+  const cells = [];
+  for (let i=0;i<offset;i++) cells.push('<div></div>');
+  for (let d=1; d<=total; d++){
+    const isToday = (d===today.getDate() && y===today.getFullYear() && m===today.getMonth()+1);
+    const cls = isToday ? 'bg-amber-500/20 text-amber-400 font-bold text-xs pl-2 py-2' : 'text-xs text-white pl-2 py-2';
+    cells.push('<div class="'+cls+' bg-slate-800/40 rounded-md h-full flex items-start">'+d+'</div>');
+  }
+  while (cells.length < 35) cells.push('<div class="bg-slate-800/20 rounded-md h-full"></div>');
+  grid.innerHTML = cells.join('');
+}
+function openSelect(type){
+  if(type==='month'){ buildMonthMenu(); document.getElementById('menuMonth').classList.remove('hidden'); }
+  else { buildYearMenu(); document.getElementById('menuYear').classList.remove('hidden'); }
+}
+function closeSelect(){ document.getElementById('menuMonth').classList.add('hidden'); document.getElementById('menuYear').classList.add('hidden'); }
+function buildMonthMenu(){
+  const g=document.getElementById('monthGrid'); g.innerHTML='';
+  for(let i=1;i<=12;i++){ const b=document.createElement('button'); b.className='bg-slate-800 hover:bg-amber-500 text-white rounded p-2 font-medium'; b.textContent=months[i-1]; b.onclick=()=>{m=i; closeSelect(); updateUI();}; g.appendChild(b); }
+}
+function buildYearMenu(){
+  const g=document.getElementById('yearGrid'); g.innerHTML='';
+  for(let yr=1900; yr<=2100; yr++){ const b=document.createElement('button'); b.className='bg-slate-800 hover:bg-amber-500 text-white rounded p-2 text-sm'; b.textContent=yr; b.onclick=()=>{y=yr; closeSelect(); updateUI();}; g.appendChild(b); }
+}
+updateUI();
+</script>
+</body>
+</html>
