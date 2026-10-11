@@ -12,8 +12,8 @@
   <header class="bg-slate-900/70 backdrop-blur rounded-2xl shadow-xl p-2 flex items-center justify-between gap-4">
     <h1 class="text-2xl font-extrabold text-white flex items-center gap-3"><a href="/" class="bg-slate-800 rounded-lg p-2 hover:bg-slate-700 transition text-white no-underline"><span>🏠</span></a> <a href="/calendario" class="bg-slate-800 rounded-lg p-2 hover:bg-slate-700 transition text-white no-underline"><span>📅</span></a></h1>
     <div class="flex gap-2">
-      <button onclick="openSelect('month')" class="bg-slate-800 hover:bg-slate-700 rounded-xl px-4 py-2 shadow text-center transition-colors border border-slate-700/50"><div id="labelMonth" class="text-base font-bold text-white">Gen</div></button>
-      <button onclick="openSelect('year')" class="bg-slate-800 hover:bg-slate-700 rounded-xl px-4 py-2 shadow text-center transition-colors border border-slate-700/50"><div id="labelYear" class="text-base font-bold text-white">2025</div></button>
+      <button onclick="openSelect('month')" class="bg-slate-800 hover:bg-slate-700 rounded-xl px-4 py-2 shadow text-center transition-colors border border-slate-700/50"><div id="labelMonth" class="text-base font-bold text-white">Ott</div></button>
+      <button onclick="openSelect('year')" class="bg-slate-800 hover:bg-slate-700 rounded-xl px-4 py-2 shadow text-center transition-colors border border-slate-700/50"><div id="labelYear" class="text-base font-bold text-white">2026</div></button>
     </div>
   </header>
 
@@ -22,7 +22,6 @@
       <div>Lun</div><div>Mar</div><div>Mer</div><div>Gio</div><div>Ven</div><div>Sab</div><div>Dom</div>
     </div>
     
-  <div class="text-xs text-white mt-2" id="eventsBox"></div>
   <div id="calGrid" class="grid grid-cols-7 gap-1 flex-1" style="grid-template-rows: repeat(5, 1fr);"></div>
   </div>
 </div>
@@ -31,7 +30,7 @@
 <div id="menuYear" class="hidden fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4"><div class="bg-slate-900 rounded-2xl p-6 shadow-2xl max-w-xs w-full h-96 overflow-y-auto"><h3 class="text-xl font-bold text-white mb-4">Seleziona Anno</h3><div class="grid grid-cols-3 gap-2" id="yearGrid"></div><button onclick="closeSelect()" class="mt-4 w-full bg-slate-800 text-white rounded p-2 hover:bg-amber-500 transition">Chiudi</button></div></div>
 
 <script>
-const months = ['Gen','Feb','Mar','Apr','Mag','Giu','Lug','Set','Ott','Nov','Dic'];
+const months = ['Gen','Feb','Mar','Apr','Mag','Giu','Lug', 'Ago', 'Set','Ott','Nov','Dic'];
 let y = new Date().getFullYear(), m = new Date().getMonth() + 1;
 function updateUI(){
   document.getElementById('labelMonth').textContent = months[m-1];
@@ -51,7 +50,7 @@ function buildGrid(){
     const isToday = (d===today.getDate() && y===today.getFullYear() && m===today.getMonth()+1);
     const cls = isToday ? 'bg-amber-500/20 text-amber-400 font-bold text-xs pl-2 py-2' : 'text-xs text-white pl-2 py-2';
     const evs = (window.calEvents||[]).filter(e=>{ let ds=y+'-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0'); return e.date===ds; });
-    const evHtml = evs.map(e=>'<div class="text-[6px] text-amber-300 truncate">'+e.summary+'</div>').join('');
+    const evHtml = evs.map(e=>'<div class="text-[6px] text-white text-[9px]">'+e.summary+'</div>').join('');
     cells.push('<div class="'+cls+' bg-slate-800/40 rounded-md h-full flex flex-col p-0.5">'+d+evHtml+'</div>');
   }
   while (cells.length < 35) cells.push('<div class="bg-slate-800/20 rounded-md h-full"></div>');
@@ -64,13 +63,14 @@ function openSelect(type){
 function closeSelect(){ document.getElementById('menuMonth').classList.add('hidden'); document.getElementById('menuYear').classList.add('hidden'); }
 function buildMonthMenu(){
   const g=document.getElementById('monthGrid'); g.innerHTML='';
-  for(let i=1;i<=12;i++){ const b=document.createElement('button'); b.className='bg-slate-800 hover:bg-amber-500 text-white rounded p-2 font-medium'; b.textContent=months[i-1]; b.onclick=()=>{m=i; closeSelect(); updateUI();}; g.appendChild(b); }
+  for(let i=1;i<=12;i++){ const b=document.createElement('button'); b.className='bg-slate-800 hover:bg-amber-500 text-white rounded p-2 font-medium'; b.textContent=months[i-1]; b.onclick=()=>{m=i; closeSelect(); updateUI(); loadEvents();}; g.appendChild(b); }
 }
 function buildYearMenu(){
   const g=document.getElementById('yearGrid'); g.innerHTML='';
-  for(let yr=1900; yr<=2100; yr++){ const b=document.createElement('button'); b.className='bg-slate-800 hover:bg-amber-500 text-white rounded p-2 text-sm'; b.textContent=yr; b.onclick=()=>{y=yr; closeSelect(); updateUI();}; g.appendChild(b); }
+  for(let yr=1900; yr<=2100; yr++){ const b=document.createElement('button'); b.className='bg-slate-800 hover:bg-amber-500 text-white rounded p-2 text-sm'; b.textContent=yr; b.onclick=()=>{y=yr; closeSelect(); updateUI(); loadEvents();}; g.appendChild(b); }
 }
-updateUI();
+updateUI(); loadEvents();
+loadEvents();
 </script>
 <script>
 function loadEvents(){
@@ -84,13 +84,12 @@ function loadEvents(){
       if(data.error){ box.innerHTML='<div class="text-red-400 text-xs">Errore: '+data.error+'</div>'; return; }
       const groups = {};
       data.forEach(e=>{ if(e.date) groups[e.date]=(groups[e.date]||[]).concat(e.summary); });
-      let html = '<div class="text-[10px] font-bold text-amber-400 mb-1">Eventi mese</div>';
+      let html = '<div class="text-[9px] font-bold text-amber-400 mb-1">Eventi mese</div>';
       for(const d in groups){ html += '<div class="text-[8px] text-white mb-0.5"><span class="text-slate-400">'+d+'</span>: '+groups[d].join(', ')+'</div>'; }
       box.innerHTML = html || '<div class="text-xs text-slate-500">Nessun evento</div>';
     });
 }
-updateUI = (function(orig){ return function(){ orig(); loadEvents(); }; })(updateUI);
-</script>
+loadEvents();
 </script>
 </body>
 </html>
