@@ -170,5 +170,8 @@ def api_versetto():
 @app.route("/api/motivi")
 def api_motivi(): return jsonify({"motivi": read_motivi()})
 
+@app.route("/calendario")
+def calendario(): return render_template("calendar.html")
+
 if __name__ == "__main__":
     app.run(debug=True, host='0.0.0.0', port=5000)

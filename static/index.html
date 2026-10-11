@@ -36,9 +36,14 @@
 <span>🌬️ <span id="weather-wind">-</span> km/h</span>
 </div>
 </div>
-<div class="bg-slate-900/70 backdrop-blur rounded-2xl shadow-xl p-6 backdrop-blur rounded-2xl shadow-xl p-6">
-<h2 class="text-xl font-bold text-white mb-4">Scadenze di Oggi</h2>
-<ul id="deadline-list" class="space-y-2"></ul>
+<div class="bg-slate-900/70 backdrop-blur rounded-2xl shadow-xl p-6 flex flex-col gap-3">
+  <div class="flex items-center justify-between">
+    <h2 class="text-xl font-bold text-white">Scadenze di Oggi</h2>
+    <a href="/calendario" class="inline-block p-2 rounded-xl bg-slate-800/50 hover:bg-amber-500/30 transition-all duration-200 text-slate-400 hover:text-amber-400 focus:outline-none">
+      📅
+    </a>
+  </div>
+  <ul id="deadline-list" class="space-y-2"></ul>
 </div>
 <div class="bg-slate-900/70 backdrop-blur rounded-2xl shadow-xl p-6 backdrop-blur rounded-2xl shadow-xl p-6">
 <h2 class="text-xl font-bold text-white mb-4">Motivi di Preghiera</h2>

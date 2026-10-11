@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="it">
+<head><meta charset="UTF-8"><title>Calendario - Buccheri Alfonso</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+<style>body{font-family:'Inter',sans-serif}</style>
+</head>
+<body class="min-h-screen p-6 text-lg" style="background-image:url('https://th.bing.com/th/id/R.45369cac7770f676761b88c4607e8382?rik=9C0fad6CCjklUA&riu=http%3a%2f%2fgetwallpapers.com%2fwallpaper%2ffull%2f6%2f9%2fe%2f517158.jpg&ehk=%2f0kylz2YF12Mw2Uj9IIZ0IXxRJmWwUtidSyfKaWuWSM%3d&risl=&pid=ImgRaw&r=0');background-size:150%;background-position:center center;">
+<div class="max-w-3xl mx-auto">
+<header class="bg-slate-900/70 backdrop-blur rounded-2xl shadow-xl p-8 mb-8 text-center"><h1 class="text-3xl font-extrabold text-white">Buccheri Alfonso 🏠</h1><p class="text-slate-400">Calendario di Medea, Luca e Ester</p></header>
+<main class="bg-slate-900/70 backdrop-blur rounded-2xl shadow-xl p-6">
+<div class="flex gap-4 mb-6 justify-center"><select id="monthSel" class="bg-slate-800 text-white rounded p-2"><option>Gennaio</option><option>Febbraio</option><option>Marzo</option><option>Aprile</option><option>Maggio</option><option>Giugno</option><option>Luglio</option><option>Agosto</option><option>Settembre</option><option>Ottobre</option><option>Novembre</option><option>Dicembre</option></select><input id="yearSel" type="number" value="2025" class="bg-slate-800 text-white rounded p-2 w-24"></div>
+<div id="calGrid" class="grid grid-cols-7 gap-2 text-center text-sm"></div>
+</main>
+</div>
+<script>
+function renderCal(){const m=parseInt(document.getElementById('monthSel').selectedIndex);const y=parseInt(document.getElementById('yearSel').value);const d=new Date(y,m,1);const grid=document.getElementById('calGrid');grid.innerHTML='';['L','M','M','G','V','S','D'].forEach(d=>{const el=document.createElement('div');el.className='font-bold text-amber-400';el.textContent=d;grid.appendChild(el);});while(d.getDay()!==1){const s=document.createElement('div');s.innerHTML='&nbsp;';grid.appendChild(s);d.setDate(d.getDate()+1);}for(let i=1;i<=new Date(y,m+1,0).getDate();i++){const s=document.createElement('div');s.className='bg-slate-800 rounded p-2 text-slate-200 hover:bg-amber-500 hover:text-white';s.textContent=i;grid.appendChild(s);}d.setDate(1);d.setMonth(d.getMonth()+1);}
+document.getElementById('monthSel').addEventListener('change',renderCal);document.getElementById('yearSel').addEventListener('input',renderCal);renderCal();
+</script>
+</body>
+</html>
