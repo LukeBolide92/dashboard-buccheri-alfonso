@@ -12,6 +12,8 @@
   <header class="bg-slate-900/70 backdrop-blur rounded-2xl shadow-xl p-2 flex items-center justify-between gap-4">
     <h1 class="text-2xl font-extrabold text-white flex items-center gap-3"><a href="/" class="bg-slate-800 rounded-lg p-2 hover:bg-slate-700 transition text-white no-underline"><span>🏠</span></a> <a href="/calendario" class="bg-slate-800 rounded-lg p-2 hover:bg-slate-700 transition text-white no-underline"><span>📅</span></a></h1>
     <div class="flex gap-2">
+      <button onclick="prevMonth()" class="bg-slate-800 hover:bg-amber-500 text-white rounded-lg px-3 py-2">◀</button>
+      <button onclick="nextMonth()" class="bg-slate-800 hover:bg-amber-500 text-white rounded-lg px-3 py-2">▶</button>
       <button onclick="openSelect('month')" class="bg-slate-800 hover:bg-slate-700 rounded-xl px-4 py-2 shadow text-center transition-colors border border-slate-700/50"><div id="labelMonth" class="text-base font-bold text-white">Ott</div></button>
       <button onclick="openSelect('year')" class="bg-slate-800 hover:bg-slate-700 rounded-xl px-4 py-2 shadow text-center transition-colors border border-slate-700/50"><div id="labelYear" class="text-base font-bold text-white">2026</div></button>
     </div>
@@ -69,7 +71,9 @@ function buildYearMenu(){
   const g=document.getElementById('yearGrid'); g.innerHTML='';
   for(let yr=1900; yr<=2100; yr++){ const b=document.createElement('button'); b.className='bg-slate-800 hover:bg-amber-500 text-white rounded p-2 text-sm'; b.textContent=yr; b.onclick=()=>{y=yr; closeSelect(); updateUI(); loadEvents();}; g.appendChild(b); }
 }
-updateUI(); loadEvents();
+function nextMonth(){ m++; if(m>12){m=1; y++;} updateUI(); loadEvents(); }
+function prevMonth(){ m--; if(m<1){m=12; y--;} updateUI(); loadEvents(); }
+updateUI();
 loadEvents();
 </script>
 <script>
