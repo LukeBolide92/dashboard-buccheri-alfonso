@@ -4,7 +4,7 @@ from datetime import datetime
 from flask import Flask, render_template, jsonify, request
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
-from calendar_config import MEDEA_CALENDAR_ID
+from calendar_config import MEDEA_CALENDAR_ID, LUCA_CALENDAR_ID
 
 # Motivi di preghiera - file semplice modificabile da browser
 MOTIVI_FILE = 'motivi.txt'
@@ -135,8 +135,6 @@ def add_cors_headers(response):
 @app.route("/api/weather")
 def api_weather(): return jsonify(fetch_weather())
 
-@app.route("/api/calendar-events")
-def api_calendar_events(): return jsonify(fetch_calendar_events())
 
 @app.route("/api/versetto")
 def api_versetto():
@@ -170,6 +168,35 @@ def api_versetto():
 @app.route("/api/motivi")
 def api_motivi(): return jsonify({"motivi": read_motivi()})
 
+
+@app.route('/api/calendar-events')
+def api_calendar_events():
+    try:
+        from datetime import timedelta, timezone
+        m = int(request.args.get('month', datetime.now().month))
+        y = int(request.args.get('year', datetime.now().year))
+        start = datetime(y, m, 1, 0, 0, 0, tzinfo=timezone.utc)
+        if m == 12:
+            end = datetime(y+1, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
+        else:
+            end = datetime(y, m+1, 1, 0, 0, 0, tzinfo=timezone.utc)
+        creds = service_account.Credentials.from_service_account_file('service_account.json', scopes=SCOPES)
+        service = build('calendar', 'v3', credentials=creds)
+        out = []
+        for cal_id in [MEDEA_CALENDAR_ID, LUCA_CALENDAR_ID]:
+            try:
+                events_result = service.events().list(calendarId=cal_id, timeMin=start.isoformat(), timeMax=end.isoformat(), singleEvents=True, orderBy='startTime').execute()
+                events = events_result.get('items', [])
+                for ev in events:
+                    start_ev = ev.get('start', {}).get('dateTime') or ev.get('start', {}).get('date')
+                    summary = ev.get('summary', '')
+                    day = int(start_ev[8:10]) if start_ev and len(start_ev) >= 10 else None
+                    out.append({'date': start_ev[:10] if start_ev else None, 'day': day, 'summary': summary, 'source': cal_id})
+            except Exception:
+                pass
+        return jsonify(out)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == "__main__":
     app.run(debug=True, host='0.0.0.0', port=5000)

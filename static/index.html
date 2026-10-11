@@ -63,19 +63,21 @@ document.getElementById('weather-humidity').textContent=d.humidity||'?';
 document.getElementById('weather-wind').textContent=d.wind||'?';
 });
 
-fetch('http://localhost:5000/api/calendar-events')
+const todayStr = new Date().toISOString().split('T')[0];
+fetch('http://localhost:5000/api/calendar-events?month='+(new Date().getMonth()+1)+'&year='+new Date().getFullYear())
 .then(r=>r.json())
 .then(events=>{
 const ul=document.getElementById('deadline-list');
-if(!events||!events.length){ul.innerHTML='<li class="text-slate-500">Nessuna scadenza</li>'; return;}
-events.forEach(ev=>{
+if(!events||!Array.isArray(events)){ul.innerHTML='<li class="text-slate-500">Nessuna scadenza</li>'; return;}
+const todayEvents = events.filter(e=>e.date===todayStr);
+if(!todayEvents.length){ul.innerHTML='<li class="text-slate-500">Nessuna scadenza oggi</li>'; return;}
+todayEvents.forEach(ev=>{
 const li=document.createElement('li');
 li.className='bg-slate-800 rounded-lg p-3 shadow-sm flex items-center justify-between gap-3';
-li.innerHTML='<div class="flex items-center gap-3"><span class="font-bold text-white">'+(ev.title||'Evento')+'</span><span class="text-slate-400 text-xs">'+(ev.time||'')+'</span></div><span class="text-xs '+(ev.done?'line-through text-amber-600':'text-amber-400')+'">'+(ev.done?'✓':'')+'</span>';
+li.innerHTML='<div class="flex items-center gap-3"><span class="font-bold text-white">'+(ev.summary||'Evento')+'</span></div>';
 ul.appendChild(li);
 });
 });
-
 fetch('http://localhost:5000/api/motivi')
 .then(r=>r.json())
 .then(d=>{

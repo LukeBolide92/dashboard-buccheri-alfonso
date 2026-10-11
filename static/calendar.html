@@ -21,7 +21,9 @@
     <div class="grid grid-cols-7 gap-1 text-center text-xs font-bold text-slate-400 mb-2">
       <div>Lun</div><div>Mar</div><div>Mer</div><div>Gio</div><div>Ven</div><div>Sab</div><div>Dom</div>
     </div>
-    <div id="calGrid" class="grid grid-cols-7 gap-1 flex-1" style="grid-template-rows: repeat(5, 1fr);"></div>
+    
+  <div class="text-xs text-white mt-2" id="eventsBox"></div>
+  <div id="calGrid" class="grid grid-cols-7 gap-1 flex-1" style="grid-template-rows: repeat(5, 1fr);"></div>
   </div>
 </div>
 
@@ -48,7 +50,9 @@ function buildGrid(){
   for (let d=1; d<=total; d++){
     const isToday = (d===today.getDate() && y===today.getFullYear() && m===today.getMonth()+1);
     const cls = isToday ? 'bg-amber-500/20 text-amber-400 font-bold text-xs pl-2 py-2' : 'text-xs text-white pl-2 py-2';
-    cells.push('<div class="'+cls+' bg-slate-800/40 rounded-md h-full flex items-start">'+d+'</div>');
+    const evs = (window.calEvents||[]).filter(e=>{ let ds=y+'-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0'); return e.date===ds; });
+    const evHtml = evs.map(e=>'<div class="text-[6px] text-amber-300 truncate">'+e.summary+'</div>').join('');
+    cells.push('<div class="'+cls+' bg-slate-800/40 rounded-md h-full flex flex-col p-0.5">'+d+evHtml+'</div>');
   }
   while (cells.length < 35) cells.push('<div class="bg-slate-800/20 rounded-md h-full"></div>');
   grid.innerHTML = cells.join('');
@@ -67,6 +71,26 @@ function buildYearMenu(){
   for(let yr=1900; yr<=2100; yr++){ const b=document.createElement('button'); b.className='bg-slate-800 hover:bg-amber-500 text-white rounded p-2 text-sm'; b.textContent=yr; b.onclick=()=>{y=yr; closeSelect(); updateUI();}; g.appendChild(b); }
 }
 updateUI();
+</script>
+<script>
+function loadEvents(){
+  fetch('http://localhost:5000/api/calendar-events?month='+m+'&year='+y)
+    .then(r=>r.json())
+    .then(data=>{
+      window.calEvents = data;
+      buildGrid();
+      const box = document.getElementById('eventsBox');
+      if(!box) return;
+      if(data.error){ box.innerHTML='<div class="text-red-400 text-xs">Errore: '+data.error+'</div>'; return; }
+      const groups = {};
+      data.forEach(e=>{ if(e.date) groups[e.date]=(groups[e.date]||[]).concat(e.summary); });
+      let html = '<div class="text-[10px] font-bold text-amber-400 mb-1">Eventi mese</div>';
+      for(const d in groups){ html += '<div class="text-[8px] text-white mb-0.5"><span class="text-slate-400">'+d+'</span>: '+groups[d].join(', ')+'</div>'; }
+      box.innerHTML = html || '<div class="text-xs text-slate-500">Nessun evento</div>';
+    });
+}
+updateUI = (function(orig){ return function(){ orig(); loadEvents(); }; })(updateUI);
+</script>
 </script>
 </body>
 </html>
