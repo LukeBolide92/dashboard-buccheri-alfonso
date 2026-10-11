@@ -74,7 +74,7 @@ if(!todayEvents.length){ul.innerHTML='<li class="text-slate-500">Nessuna scadenz
 todayEvents.forEach(ev=>{
 const li=document.createElement('li');
 li.className='bg-slate-800 rounded-lg p-3 shadow-sm flex items-center justify-between gap-3';
-li.innerHTML='<div class="flex items-center gap-3"><span class="font-bold text-white">'+(ev.summary||'Evento')+'</span></div>';
+li.innerHTML='<div class="flex items-center gap-3"><span class="font-bold '+(ev.source && ev.source.indexOf('luca')!==-1 ? 'text-sky-300' : 'text-amber-400')+'">'+(ev.summary||'Evento')+'</span></div>';
 ul.appendChild(li);
 });
 });
