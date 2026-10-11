@@ -191,7 +191,11 @@ def api_calendar_events():
                     start_ev = ev.get('start', {}).get('dateTime') or ev.get('start', {}).get('date')
                     summary = ev.get('summary', '')
                     day = int(start_ev[8:10]) if start_ev and len(start_ev) >= 10 else None
-                    out.append({'date': start_ev[:10] if start_ev else None, 'day': day, 'summary': summary, 'source': cal_id})
+                    time_str = ''
+                    if start_ev and 'T' in start_ev:
+                        time_part = start_ev.split('T')[1]
+                        time_str = time_part[:5]  # HH:MM
+                    out.append({'date': start_ev[:10] if start_ev else None, 'day': day, 'summary': summary, 'time': time_str, 'source': cal_id})
             except Exception:
                 pass
         return jsonify(out)
