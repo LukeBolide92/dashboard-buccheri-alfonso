@@ -1,5 +1,6 @@
 Act as a senior Python engineer.
 IMPORTANT: never commit and push without user permission.
+Required authorization words: user must say exactly "committa" and "pusha" before any git commit/push is executed.
 Before making changes:
 1. Understand the repository
 2. Produce a plan
