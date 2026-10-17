@@ -66,16 +66,26 @@ document.getElementById('weather-wind').textContent=d.wind||'?';
 const todayStr = new Date().toISOString().split('T')[0];
 fetch('http://'+window.location.hostname+':5000/api/calendar-events?month='+(new Date().getMonth()+1)+'&year='+new Date().getFullYear())
 .then(r=>r.json())
-.then(events=>{
+.then(calendarEvents=>{
+return fetch('http://'+window.location.hostname+':5000/api/giorni-giovani')
+.then(r=>r.json())
+.then(giovaniEvents=>{
+const allEvents = [...(calendarEvents||[]), ...(giovaniEvents||[])];
 const ul=document.getElementById('deadline-list');
-if(!events||!Array.isArray(events)){ul.innerHTML='<li class="text-slate-500">Nessuna scadenza</li>'; return;}
-const todayEvents = events.filter(e=>e.date===todayStr);
+if(!allEvents||!Array.isArray(allEvents)){ul.innerHTML='<li class="text-slate-500">Nessuna scadenza</li>'; return;}
+const todayEvents = allEvents.filter(e=>e.date===todayStr);
 if(!todayEvents.length){ul.innerHTML='<li class="text-slate-500">Nessuna scadenza oggi</li>'; return;}
 todayEvents.forEach(ev=>{
 const li=document.createElement('li');
 li.className='bg-slate-800 rounded-lg p-3 shadow-sm flex items-center justify-between gap-3';
 li.innerHTML='<div class="flex items-center gap-3"><span class="font-bold '+(ev.source && ev.source.indexOf('luca')!==-1 ? 'text-sky-300' : 'text-amber-400')+'">'+(ev.summary||'Evento')+'</span></div>';
 ul.appendChild(li);
+});
+})
+.catch(err=>{
+console.error('Errore caricamento eventi giovani:', err);
+const ul=document.getElementById('deadline-list');
+ul.innerHTML='<li class="text-slate-500">Nessuna scadenza oggi</li>';
 });
 });
 fetch('http://'+window.location.hostname+':5000/api/motivi')

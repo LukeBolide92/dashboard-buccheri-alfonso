@@ -1,6 +1,7 @@
 import json
 import urllib.request
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
+import openpyxl
 from flask import Flask, render_template, jsonify, request
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
@@ -27,7 +28,7 @@ def fetch_calendar_events():
         now = datetime.now()
         # Solo eventi di oggi (da mezzanotte a mezzanotte domani)
         tomorrow = now.replace(hour=0, minute=0, second=0, microsecond=0)
-        tomorrow += __import__('datetime').timedelta(days=1)
+        tomorrow += timedelta(days=1)
         time_min = now.strftime('%Y-%m-%dT00:00:00Z')
         time_max = tomorrow.strftime('%Y-%m-%dT00:00:00Z')
         events = []
@@ -50,7 +51,6 @@ def fetch_calendar_events():
                     })
             except Exception:
                 pass
-        # Se vuoto, mantiene placeholder
         return events[:5]
     except Exception:
         return []
@@ -124,7 +124,6 @@ def fetch_weather():
 @app.route("/toggle_deadline/<event_id>", methods=["POST"])
 
 
-
 @app.after_request
 def add_cors_headers(response):
     response.headers['Access-Control-Allow-Origin'] = '*'
@@ -169,10 +168,9 @@ def api_versetto():
 def api_motivi(): return jsonify({"motivi": read_motivi()})
 
 
-@app.route('/api/calendar-events')
+@app.route("/api/calendar-events")
 def api_calendar_events():
     try:
-        from datetime import timedelta, timezone
         m = int(request.args.get('month', datetime.now().month))
         y = int(request.args.get('year', datetime.now().year))
         start = datetime(y, m, 1, 0, 0, 0, tzinfo=timezone.utc)
@@ -198,9 +196,97 @@ def api_calendar_events():
                     out.append({'date': start_ev[:10] if start_ev else None, 'day': day, 'summary': summary, 'time': time_str, 'source': cal_id})
             except Exception:
                 pass
+
         return jsonify(out)
+    
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+
+# ==============================
+# NUOVO ENDPOINT: GIORNI GIOVANI
+# ==============================
+def read_giorni_giovani():
+    """Legge il file Excel e restituisce gli eventi nel formato {date: 'YYYY-MM-DD', summary: '...'}"""
+    try:
+        # Carica l'Excel
+        wb = openpyxl.load_workbook('programma_giovani/Programma Gruppo Giovani.xlsx', data_only=True)
+        ws = wb.worksheets[0]  # Primo foglio
+        
+        # Trova le intestazioni (dove sono i mesi e i sabati)
+        # Cerchiamo la cella che contiene "Sab" o "Sabato"
+        header_row = None
+        for row in ws.iter_rows(min_row=1, max_row=5, values_only=True):
+            if any(cell and str(cell).strip().lower() in ['sab', 'sabato'] for cell in row):
+                header_row = row
+                break
+        
+        if not header_row:
+            return []  # Nessun dato trovato
+            
+        # Trova l'indice della colonna "Sab"
+        sab_index = None
+        for i, cell in enumerate(header_row):
+            if cell and str(cell).strip().lower() in ['sab', 'sabato']:
+                sab_index = i
+                break
+                
+        if sab_index is None:
+            return []  # Nessuna colonna "Sab" trovata
+            
+        # Leggi le date
+        events = []
+        for row_idx in range(6, ws.max_row + 1):  # Partiamo dalla riga 6 (dopo le intestazioni)
+            cell = ws.cell(row=row_idx, column=sab_index + 1)  # +1 per convertire da 0-based a 1-based
+            if cell.value:
+                # Estrai il numero del giorno (es. "1", "8", "15")
+                # Il formato sembra essere solo il numero del giorno
+                day_str = str(cell.value).strip()
+                try:
+                    day = int(day_str)
+                except ValueError:
+                    continue  # Salta se non è un numero
+                    
+                # Estrai il mese (dalla prima colonna della riga)
+                month_cell = ws.cell(row=row_idx, column=1)
+                month_name = str(month_cell.value).strip().capitalize()
+                
+                # Mappa il nome del mese al numero
+                month_map = {
+                    'Gen': 1, 'Feb': 2, 'Mar': 3, 'Apr': 4, 'Mag': 5, 'Giu': 6,
+                    'Lug': 7, 'Ago': 8, 'Set': 9, 'Ott': 10, 'Nov': 11, 'Dic': 12
+                }
+                
+                if month_name in month_map:
+                    month = month_map[month_name]
+                    year = 2026  # Supponiamo l'anno 2026
+                    
+                    # Costruisci la data ISO
+                    date_str = f"{year}-{str(month).zfill(2)}-{str(day).zfill(2)}"
+                    
+                    # Leggi il titolo dell'evento (colonna a destra di "Sab")
+                    title_cell = ws.cell(row=row_idx, column=sab_index + 2)  # +2 per andare alla colonna successiva
+                    title = str(title_cell.value).strip() if title_cell.value else ""
+                    
+                    if title:
+                        events.append({
+                            'date': date_str,
+                            'summary': title
+                        })
+        return events
+    except Exception as e:
+        print(f"Errore nella lettura dell'Excel: {e}")
+        return []
+
+
+@app.route("/api/giorni-giovani")
+def api_giorni_giovani():
+    try:
+        events = read_giorni_giovani()
+        return jsonify(events)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 
 if __name__ == "__main__":
     app.run(debug=True, host='0.0.0.0', port=5000)

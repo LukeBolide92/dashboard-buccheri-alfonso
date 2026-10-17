@@ -86,7 +86,27 @@ function loadEvents(){
     .then(r=>r.json())
     .then(data=>{
       window.calEvents = data;
+      loadGiovaniEvents(y, m);
       buildGrid();
+      const box = document.getElementById('eventsBox');
+      if(!box) return;
+      if(data.error){ box.innerHTML='<div class="text-red-400 text-xs">Errore: '+data.error+'</div>'; return; }
+      const groups = {};
+      data.forEach(e=>{ if(e.date) groups[e.date]=(groups[e.date]||[]).concat(e.summary); });
+      const giovi = (window.gioviEvents||[]).filter(e=>e.date);
+      const allEvents = [...data, ...window.gioviEvents];
+      if(!allEvents.length){ box.innerHTML='<div class="text-xs text-slate-500">Nessun evento</div>'; return; }
+      for(const d in groups){ html += '<div class="text-[8px] text-white mb-0.5"><span class="text-slate-400">'+d+'</span>: '+groups[d].join(', ')+'</div>'; }
+      box.innerHTML = html || '<div class="text-xs text-slate-500">Nessun evento</div>';
+    });
+}
+
+function loadGiovaniEvents(year, month){
+  fetch('http://'+window.location.hostname+':5000/api/giorni-giovani?month='+m+'&year='+y)
+    .then(r=>r.json())
+    .then(data=>{
+      window.gioviEvents = data;
+      if(data.error){ console.error('Errori giovani:', data.error); return; }
       const box = document.getElementById('eventsBox');
       if(!box) return;
       if(data.error){ box.innerHTML='<div class="text-red-400 text-xs">Errore: '+data.error+'</div>'; return; }
