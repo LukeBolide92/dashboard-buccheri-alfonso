@@ -51,7 +51,7 @@ function buildGrid(){
   for (let d=1; d<=total; d++){
     const isToday = (d===today.getDate() && y===today.getFullYear() && m===today.getMonth()+1);
     const cls = isToday ? 'bg-amber-500/20 text-white font-bold text-xs pl-2 py-2' : 'text-xs text-white pl-2 py-2';
-    const evs = (window.calEvents||[]).filter(e=>{ let ds=y+'-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0'); return e.date===ds; });
+    const evs = (window.allEvents||[]).filter(e=>{ let ds=y+'-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0'); return e.date===ds; });
         const maxShow = 4;
     const shown = evs.slice(0, maxShow - 1);
     const extra = evs.slice(3);
@@ -86,35 +86,25 @@ function loadEvents(){
     .then(r=>r.json())
     .then(data=>{
       window.calEvents = data;
-      loadGiovaniEvents(y, m);
+      return fetch('http://'+window.location.hostname+':5000/api/giorni-giovani?month='+m+'&year='+y);
+    })
+    .then(r=>r.json())
+    .then(giovaniData=>{
+      window.gioviEvents = giovaniData || [];
+      // Unisci eventi calendario e giovani
+      window.allEvents = [...(window.calEvents||[]), ...(window.gioviEvents||[])];
       buildGrid();
       const box = document.getElementById('eventsBox');
       if(!box) return;
-      if(data.error){ box.innerHTML='<div class="text-red-400 text-xs">Errore: '+data.error+'</div>'; return; }
       const groups = {};
-      data.forEach(e=>{ if(e.date) groups[e.date]=(groups[e.date]||[]).concat(e.summary); });
-      const giovi = (window.gioviEvents||[]).filter(e=>e.date);
-      const allEvents = [...data, ...window.gioviEvents];
-      if(!allEvents.length){ box.innerHTML='<div class="text-xs text-slate-500">Nessun evento</div>'; return; }
-      for(const d in groups){ html += '<div class="text-[8px] text-white mb-0.5"><span class="text-slate-400">'+d+'</span>: '+groups[d].join(', ')+'</div>'; }
-      box.innerHTML = html || '<div class="text-xs text-slate-500">Nessun evento</div>';
-    });
-}
-
-function loadGiovaniEvents(year, month){
-  fetch('http://'+window.location.hostname+':5000/api/giorni-giovani?month='+m+'&year='+y)
-    .then(r=>r.json())
-    .then(data=>{
-      window.gioviEvents = data;
-      if(data.error){ console.error('Errori giovani:', data.error); return; }
-      const box = document.getElementById('eventsBox');
-      if(!box) return;
-      if(data.error){ box.innerHTML='<div class="text-red-400 text-xs">Errore: '+data.error+'</div>'; return; }
-      const groups = {};
-      data.forEach(e=>{ if(e.date) groups[e.date]=(groups[e.date]||[]).concat(e.summary); });
+      window.allEvents.forEach(e=>{ if(e.date) groups[e.date]=(groups[e.date]||[]).concat(e.summary); });
       let html = '<div class="text-[9px] font-bold text-amber-400 mb-1">Eventi mese</div>';
       for(const d in groups){ html += '<div class="text-[8px] text-white mb-0.5"><span class="text-slate-400">'+d+'</span>: '+groups[d].join(', ')+'</div>'; }
       box.innerHTML = html || '<div class="text-xs text-slate-500">Nessun evento</div>';
+    })
+    .catch(err=>{
+      console.error('Errori caricamento:', err);
+      buildGrid();
     });
 }
 loadEvents();
